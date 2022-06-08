@@ -1,0 +1,26 @@
+.container-sm{
+    float: right;
+    padding: 10px;
+}
+
+.prueba{
+    width: 130px;
+    overflow: auto;
+}
+
+.casilla{
+    display: flex;
+    justify-content: center;
+    float: left;
+    width: 20px;
+    margin-right: 5px;
+    border: solid 0.5px rgb(112, 103, 103);
+    background-color: aquamarine;
+}
+
+
+
+
+
+
+

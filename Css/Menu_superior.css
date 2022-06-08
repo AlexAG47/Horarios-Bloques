@@ -1,0 +1,12 @@
+.navbar{
+    float: right;
+    width: 82%;
+    border-radius: 0;
+    background-color: #2c2b2b;
+}
+
+.titulo{
+    color:white;
+    font-size: 25px;
+    margin-left: 10%;
+}
