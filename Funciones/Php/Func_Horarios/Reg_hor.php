@@ -19,6 +19,7 @@
             7 => "",
             8 => ""
             );
+            
     $profesores = array(
             1 => "",
             2 => "",
@@ -28,22 +29,166 @@
             6 => "",
             7 => ""
             );
+    
 
 
+    
     //OBTENEMOS PRIMERO LAS MATERIAS QUE CORRESPONDAN A LA CARRERA Y SEMESTRE 
     $resultado = mysqli_query($conexion,obtenMaterias($carrera,$semestre));
-    $num_materia = 1; //CONTADOR DE MATERIAS
+    $contador_materias = 1; //CONTADOR DE MATERIAS
+    $profInvolucrados = array(); //ENCARGADO DE GUARDAR LOS PROFESORES, SU SOBRECARGA Y BLOQUES DE DISPONIBILIDAD CON LOS QUE CUENTA 
+
+    //GUARDAMOS A TODOS LOS PROFESORES QUE IMPARTEN CADA UNA DE LAS MATERIAS 
+    foreach($resultado as $materia){
+
+        $resultado2 = mysqli_query($conexion,obtenProfesores($materia['id_materia']));
+
+        foreach($resultado2 as $profesor){
+            
+            $nom_profesor = $profesor['nombre']." ".$profesor['ap_paterno']." ".$profesor['ap_materno'];
+            
+            //HACE QUE NO SE REPITAN REGISTROS DE PROFESORES QUE DAN MAS DE UNA MATERIA 
+            if(array_key_exists($nom_profesor,$profInvolucrados))
+                continue;
+            else{
+                //PONEMOS A TODOS CON UNA SOBRECARGA DE 0 COMO PREDETERMINADO
+                $profInvolucrados[$nom_profesor]['sobrecarga'] = 0;
+                //CONSULTAMOS LAS DISPONIBILIDADES DE CADA PROFESOR PARA QUE SEAN REGISTRADAS
+                $resultado3 = mysqli_query($conexion,obtenDisponibilidades($profesor['id_profesor']));
+                //GUARDAMOS TODAS SUS DISPONIBILIDADES CORRESPONDIENTES
+                foreach($resultado3 as $disponibilidad){
+                    $profInvolucrados[$nom_profesor]['disponibilidad'][] = $disponibilidad['id_disponibilidad'];
+                }    
+                
+            }
+                        
+        }
+    }
+
+    foreach($profInvolucrados as $profesor => $datos){
+
+        echo $datos['sobrecarga'];
+
+        foreach($datos as $dato => $valor){
+            if($dato != 'disponibilidad'){
+                continue;
+            } else {
+                foreach($valor as $bloque){
+                    echo $bloque;
+                }
+                echo "<br>";
+            }
+        }
+    }
+
+   
+    //TENEMOS QUE CONTAR CON UN MINIMO DE 7 PROFESORES DISPONIBLES PARA CREAR UN HORARIO
+    if(count($profInvolucrados) >= 7){
+
+        foreach($resultado as $materia){ 
+        
+            $bool_doble = $materia['bool_mat_doble']; //GUARDAMOS EL VALOR DE SI ES UNA MATERIA DOBLE
+            $nom_materia = $materia['nom_materia']; //GUARDAMOS EL NOMBRE DE LA MATERIA A ASIGNAR EN UN BLOQUE
+    
+            //OBTENEMOS LOS PROFESORES QUE IMPARTEN ESA MATERIA
+            $resultado2 = mysqli_query($conexion,obtenProfesores($materia['id_materia']));
+
+            $profDisponibles = array(); //SE GUARDAN LOS PROFESORES QUE SON
+
+            foreach($resultado2 as $profesor){
+
+            }
+    
+            $profDisponibles = array(); //SE GUARDAN A LOS PROFESORES QUE CUENTAN CON UN BLOQUE CORRESPONDIENTE DISPONIBLE
+            
+            $salir = 0; //VARIABLE QUE NOS PERMITE SALIR DE LOS CICLOS EN CASO DE QUE YA ESTE ASIGNADA LA MATERIA
+        
+            if($bool_doble != 1){
+
+
+                
+                        
+            } else {
+
+                   //OBTENEMOS A LAS DISPONIBILIDADES QUE TIENEN ESOS PROFESORES
+                   foreach($profInvolucrados as $profesor => $datos){
+                        
+                        $banderaPar = 0;
+                        $banderaImpar = 0;
+
+                        if($datos['sobrecarga'] > $num_carga){ //VERIFICA SI EL PROFESOR TIENE SOBRECARGA O PUEDE CONTINUAR
+                            continue;
+                        } else {
+
+                            foreach($datos as $dato => $disponibilidades){
+                                if($dato != 'disponibilidad'){
+                                    continue;
+                                } else {
+                                    foreach($disponibilidades as $bloque){
+
+                                        if($banderaImpar!= 0 && $banderaPar != 0){
+                                    
+                                            $bloques[$banderaPar] = $nom_materia;
+                                            $bloques[$banderaImpar] = $nom_materia;
+                                            $profesores[$disponibilidad['id_disponibilidad']] = $nom_profesor;
+                                            $salir = 1;
+                                            break;
+                                        }
+                
+                                        if($bloque % 2 == 0 && $banderaPar == 0){
+                
+                                            if($bloques[$bloque] == ""){
+                                                
+                                                $banderaPar = $bloque;
+                    
+                                            } else
+                                                continue; 
+                
+                                        } elseif($banderaImpar == 0) {
+                
+                                            if($bloques[$bloque] == ""){
+                
+                                                $banderaImpar = $bloque;
+                
+                                            } else
+                                                continue;
+                
+                                        }
+                                    }
+                                }                              
+                            }
+                        }                
+                    }
+                }
+        }
+    } else 
+        echo "Profesores insuficientes para crear el horario";
+
+ 
+
+
 
     //OBTENEMOS A LOS PROFESORES QUE IMPARTEN ESAS MATERIAS
     foreach($resultado as $materia){ 
         
         $bool_doble = $materia['bool_mat_doble']; //GUARDAMOS EL VALOR DE SI ES UNA MATERIA DOBLE
         $nom_materia = $materia['nom_materia']; //GUARDAMOS EL NOMBRE DE LA MATERIA A ASIGNAR EN UN BLOQUE
+
+        //OBTENEMOS LOS PROFESORES QUE IMPARTEN ESA MATERIA
         $resultado2 = mysqli_query($conexion,obtenProfesores($materia['id_materia']));
+
+        $profDisponibles = array(); //SE GUARDAN A LOS PROFESORES QUE CUENTAN CON UN BLOQUE CORRESPONDIENTE DISPONIBLE
+        
         $salir = 0; //VARIABLE QUE NOS PERMITE SALIR DE LOS CICLOS EN CASO DE QUE YA ESTE ASIGNADA LA MATERIA
        
         //OBTENEMOS A LAS DISPONIBILIDADES QUE TIENEN ESOS PROFESORES
         foreach($resultado2 as $profesor){
+
+            foreach($resultado3 as $disponibilidad){
+                if($disponibilidad['id_disponibilidad' == $num_materia]){
+                    $profDisponibles[] = $nom_profesor;
+                }
+            }
 
             if($salir == 1){
                 break;
@@ -54,6 +199,9 @@
             $resultado3 = mysqli_query($conexion,obtenDisponibilidades($profesor['id_profesor']));       
             $banderaPar = 0;
             $banderaImpar = 0;
+
+            
+
 
             //SI LA MATERIA NO ES DOBLE
             if($bool_doble != 1){
